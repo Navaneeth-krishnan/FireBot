@@ -33,29 +33,28 @@
 
 ### Phase 5: Metrics & Storage
 - [x] Implement Metrics Engine (Sharpe, Sortino, max drawdown, win rate)
-- [x] Add InfluxDB/Prometheus metrics export
+- [x] Add Prometheus metrics export
 - [x] Create time-series storage for trade history
-- [x] Implement experiment metadata storage
 
 ### Phase 6: Visualization
-- [ ] Create Grafana dashboard templates
-- [ ] Add equity curve visualization
-- [ ] Implement drawdown charts
-- [ ] Add strategy comparison views
+- [x] Create Grafana dashboard templates
+- [x] Add equity curve visualization
+- [x] Implement drawdown charts
+- [x] Add strategy comparison views
 
 ## Low Priority
 
 ### Phase 7: ML Integration
-- [ ] Add MLStrategy base class with model loading
-- [ ] Implement feature store interface
-- [ ] Add model versioning support
-- [ ] Create Transformer-based strategy example
+- [x] Add MLStrategy base class with model loading
+- [x] Implement feature store interface
+- [x] Add model versioning support
+- [x] Create Transformer-based strategy example
 
 ### Phase 8: Advanced Features
-- [ ] Implement Signal Aggregation Layer (ensemble, voting)
-- [ ] Add backtesting framework with deterministic replay
-- [ ] Create forward testing mode
-- [ ] Add Docker deployment configuration
+- [x] Implement Signal Aggregation Layer (ensemble, voting)
+- [x] Add backtesting framework with deterministic replay
+- [x] Create forward testing mode
+- [x] Add Docker deployment configuration
 
 ### Future Enhancements
 - [ ] Live market data integration

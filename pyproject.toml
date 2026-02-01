@@ -40,6 +40,9 @@ metrics = [
     "influxdb-client>=1.40",
     "prometheus-client>=0.19",
 ]
+viz = [
+    "matplotlib>=3.7",
+]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
@@ -49,7 +52,7 @@ dev = [
     "mypy>=1.0",
 ]
 all = [
-    "firebot[ml,parallel,metrics,dev]",
+    "firebot[ml,parallel,metrics,viz,dev]",
 ]
 
 [project.urls]

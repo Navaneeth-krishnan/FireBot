@@ -103,6 +103,141 @@ class TestPaperTradingEngine:
         assert order.quantity == Decimal("100")
 
 
+class TestStopLossTakeProfit:
+    """Tests for stop-loss and take-profit order types."""
+
+    @pytest.fixture
+    def engine(self) -> PaperTradingEngine:
+        return PaperTradingEngine(fill_model="instant")
+
+    def test_stop_loss_sell_triggers_when_price_at_or_below_stop(
+        self, engine: PaperTradingEngine
+    ) -> None:
+        """Sell stop-loss triggers when current_price <= stop price."""
+        order = Order(
+            id="sl_001",
+            timestamp=datetime.now(timezone.utc),
+            symbol="AAPL",
+            side=OrderSide.SELL,
+            order_type=OrderType.STOP_LOSS,
+            quantity=Decimal("100"),
+            price=Decimal("140.00"),
+            strategy_id="test_strat",
+        )
+        result = engine.submit_order(order, current_price=Decimal("135.00"))
+        assert result.status == "filled"
+        assert result.fill_price == Decimal("135.00")
+
+    def test_stop_loss_sell_does_not_trigger_above_stop(
+        self, engine: PaperTradingEngine
+    ) -> None:
+        """Sell stop-loss stays pending when current_price > stop price."""
+        order = Order(
+            id="sl_002",
+            timestamp=datetime.now(timezone.utc),
+            symbol="AAPL",
+            side=OrderSide.SELL,
+            order_type=OrderType.STOP_LOSS,
+            quantity=Decimal("100"),
+            price=Decimal("140.00"),
+            strategy_id="test_strat",
+        )
+        result = engine.submit_order(order, current_price=Decimal("150.00"))
+        assert result.status == "pending"
+        assert result.fill_price is None
+
+    def test_take_profit_sell_triggers_when_price_at_or_above_target(
+        self, engine: PaperTradingEngine
+    ) -> None:
+        """Sell take-profit triggers when current_price >= target."""
+        order = Order(
+            id="tp_001",
+            timestamp=datetime.now(timezone.utc),
+            symbol="AAPL",
+            side=OrderSide.SELL,
+            order_type=OrderType.TAKE_PROFIT,
+            quantity=Decimal("100"),
+            price=Decimal("170.00"),
+            strategy_id="test_strat",
+        )
+        result = engine.submit_order(order, current_price=Decimal("175.00"))
+        assert result.status == "filled"
+        assert result.fill_price == Decimal("175.00")
+
+    def test_take_profit_sell_does_not_trigger_below_target(
+        self, engine: PaperTradingEngine
+    ) -> None:
+        """Sell take-profit stays pending when current_price < target."""
+        order = Order(
+            id="tp_002",
+            timestamp=datetime.now(timezone.utc),
+            symbol="AAPL",
+            side=OrderSide.SELL,
+            order_type=OrderType.TAKE_PROFIT,
+            quantity=Decimal("100"),
+            price=Decimal("170.00"),
+            strategy_id="test_strat",
+        )
+        result = engine.submit_order(order, current_price=Decimal("160.00"))
+        assert result.status == "pending"
+        assert result.fill_price is None
+
+    def test_buy_stop_loss_triggers_when_price_at_or_above_stop(
+        self, engine: PaperTradingEngine
+    ) -> None:
+        """Buy stop triggers when current_price >= stop (short cover)."""
+        order = Order(
+            id="bs_001",
+            timestamp=datetime.now(timezone.utc),
+            symbol="AAPL",
+            side=OrderSide.BUY,
+            order_type=OrderType.STOP_LOSS,
+            quantity=Decimal("100"),
+            price=Decimal("160.00"),
+            strategy_id="test_strat",
+        )
+        result = engine.submit_order(order, current_price=Decimal("165.00"))
+        assert result.status == "filled"
+
+    def test_pending_orders_tracked(self, engine: PaperTradingEngine) -> None:
+        """Non-triggered conditional orders are tracked as pending."""
+        order = Order(
+            id="pending_001",
+            timestamp=datetime.now(timezone.utc),
+            symbol="AAPL",
+            side=OrderSide.SELL,
+            order_type=OrderType.STOP_LOSS,
+            quantity=Decimal("100"),
+            price=Decimal("140.00"),
+            strategy_id="test_strat",
+        )
+        engine.submit_order(order, current_price=Decimal("150.00"))
+        assert len(engine.get_pending_orders()) == 1
+        assert engine.get_pending_orders()[0].id == "pending_001"
+
+    def test_check_pending_orders_triggers_on_price_move(
+        self, engine: PaperTradingEngine
+    ) -> None:
+        """Pending orders trigger when price conditions are met."""
+        order = Order(
+            id="check_001",
+            timestamp=datetime.now(timezone.utc),
+            symbol="AAPL",
+            side=OrderSide.SELL,
+            order_type=OrderType.STOP_LOSS,
+            quantity=Decimal("100"),
+            price=Decimal("140.00"),
+            strategy_id="test_strat",
+        )
+        engine.submit_order(order, current_price=Decimal("150.00"))
+        assert len(engine.get_pending_orders()) == 1
+
+        triggered = engine.check_pending_orders({"AAPL": Decimal("135.00")})
+        assert len(triggered) == 1
+        assert triggered[0].status == "filled"
+        assert len(engine.get_pending_orders()) == 0
+
+
 class TestPortfolioSimulator:
     """Tests for the Portfolio Simulator."""
 
